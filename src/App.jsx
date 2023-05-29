@@ -12,7 +12,7 @@ function App() {
     const [apellido,setApellido]=React.useState('')
     const [id,setId]=React.useState('')
     const [modoedicion,setModoedicion]=React.useState(false)
-    
+    const [error,setError]=React.useState(null)
     //Leer datos
     React.useEffect(()=>{
       const obtenerDatos=async()=>{
@@ -34,11 +34,11 @@ function App() {
     const guardarDatos=async(e)=>{
       e.preventDefault()
       if(!nombre){
-        alert("Ingrese el Nombre")
+        setError("Ingrese el Nombre")
         return
       }
       if(!apellido){
-        alert("Ingrese el Apellido")
+        setError("Ingrese el Apellido")
         return
       }
       //registrar en firebase
@@ -52,6 +52,7 @@ function App() {
         ])
         setNombre('')
         setApellido('')
+        setError(null)
 
       }
       catch (error){
@@ -60,8 +61,12 @@ function App() {
     }
 
     //Eliminar
-
+    
     const eliminarDato=async(id)=>{
+      if (modoedicion){
+        setError('No puede eliminar mientras se edita el usuario')
+        return
+      }
       try {
         const db=firebase.firestore()
         await db.collection('usuarios').doc(id).delete()
@@ -86,11 +91,11 @@ function App() {
     const editarDatos=async(e)=>{
     e.preventDefault()
     if(!nombre){
-      alert("Ingrese el Nombre")
+      setError("Ingrese el Nombre")
       return
     }
     if(!apellido){
-      alert("Ingrese el Apellido")
+      setError("Ingrese el Apellido")
       return
     }   
     try {
@@ -106,6 +111,7 @@ function App() {
         setNombre('')
         setApellido('')
         setId('')
+        setError(null)
 
     }
     catch (error){
@@ -123,6 +129,15 @@ function App() {
       }
          
       <form onSubmit={modoedicion ? editarDatos : guardarDatos}>
+        {
+          error ? (
+            <div className="alert alert-danger" role="alert">
+              {error}
+            </div>  
+          ):
+          null
+        }
+      
       <input type="text"
       placeholder='Ingrese el Nombre'
       className='form-control mb-2'
@@ -143,6 +158,7 @@ function App() {
         }
          
       </div>
+      
       
       </form> 
       <h2 className='text-center text-primary'>Listado de Ususarios Registrados</h2>
