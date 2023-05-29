@@ -10,7 +10,9 @@ function App() {
     const [Lista,setLista]=React.useState([])
     const [nombre,setNombre]=React.useState('')
     const [apellido,setApellido]=React.useState('')
-    const [modoedicion,setmodoedicion]=React.useState(false)
+    const [id,setId]=React.useState('')
+    const [modoedicion,setModoedicion]=React.useState(false)
+    
     //Leer datos
     React.useEffect(()=>{
       const obtenerDatos=async()=>{
@@ -48,6 +50,8 @@ function App() {
           ...Lista,
           {...nuevoUsuario,id:dato.id}
         ])
+        setNombre('')
+        setApellido('')
 
       }
       catch (error){
@@ -72,32 +76,72 @@ function App() {
 
     //editar
     const editar=(elemento)=>{
-      setmodoedicion(true)//activamos el modo edicion
+      setModoedicion(true)//activamos el modo edicion
+      setNombre(elemento.nombre)
+      setApellido(elemento.apellido)
+      setId(elemento.id)
     }
 
+    //editar datos
+    const editarDatos=async(e)=>{
+    e.preventDefault()
+    if(!nombre){
+      alert("Ingrese el Nombre")
+      return
+    }
+    if(!apellido){
+      alert("Ingrese el Apellido")
+      return
+    }   
+    try {
+      const db=firebase.firestore()
+      await db.collection('usuarios').doc(id).update({
+        nombre,apellido
+      })
+      const listaEditada=Lista.map(elemento=>elemento.id===id ? {id,nombre,apellido} :
+        elemento
+        )
+        setLista(listaEditada)//listamos nuevos valores
+        setModoedicion(false)
+        setNombre('')
+        setApellido('')
+        setId('')
+
+    }
+    catch (error){
+      console.error(error);
+    }
+    
 
 
-
-
+    }
   return (
     <div className='container'>
+       {
+      modoedicion ? <h2 className='text-center text-success'>Editando Usuario</h2> :
       <h2 className='text-center text-primary'>Registro de Usuarios</h2>
-      <form onSubmit={guardarDatos}>
+      }
+         
+      <form onSubmit={modoedicion ? editarDatos : guardarDatos}>
       <input type="text"
       placeholder='Ingrese el Nombre'
       className='form-control mb-2'
       onChange={(e)=>{setNombre(e.target.value.trim())}}
+      value={nombre}
       
       />  
       <input type="text"
       placeholder='Ingrese el Apellido'
       className='form-control mb-2'
       onChange={(e)=>{setApellido(e.target.value.trim())}}
+      value={apellido}
       />  
       <div className='d-grid gap-2'>
-     
-       
-
+        {
+          modoedicion ? <button type='submit' className='btn btn-outline-success'>Editar</button> :   
+          <button type='submit' className='btn btn-outline-info'>Registrar</button>    
+        }
+         
       </div>
       
       </form> 
@@ -111,7 +155,7 @@ function App() {
               onClick={()=>eliminarDato(elemento.id)}
               className='btn btn-danger float-end me-2'>Eliminar</button>
               <button 
-              onClick={()=>editar(elemento.id)}
+              onClick={()=>editar(elemento)}
               className='btn btn-warning float-end me-2'>Editar</button>
               </li>
             )
